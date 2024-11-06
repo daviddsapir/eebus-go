@@ -44,6 +44,7 @@ func (e *CDSF) HandleEvent(payload spineapi.EventPayload) {
 	}
 }
 
+// updateOverruns handles the overruns update event.
 func (e *CDSF) updateOverruns(payload spineapi.EventPayload) {
 	if e.overrunId == nil {
 		return
@@ -99,6 +100,7 @@ func (e *CDSF) updateOverrunDescriptions(payload spineapi.EventPayload) {
 		return
 	}
 
+	// Store the overrun ID for the "oneTimeDhw" overrun type.
 	e.overrunId = descriptions[0].OverrunId
 
 	selector := &model.HvacOverrunListDataSelectorsType{
@@ -133,8 +135,15 @@ func (e *CDSF) updateOperationModes(payload spineapi.EventPayload) {
 	for _, relation := range relations {
 		for _, operationModeId := range relation.OperationModeId {
 			if operationMode, found := operationModeById[operationModeId]; found {
-				e.operationModeByOperationModeId[operationModeId] = operationMode
-				e.operationModeIdByOperationMode[operationMode] = operationModeId
+				if _, found := e.operationModeByOperationModeId[operationModeId]; !found {
+					// Store the operation mode by operation mode ID
+					e.operationModeByOperationModeId[operationModeId] = operationMode
+				}
+
+				if _, found := e.operationModeIdByOperationMode[operationMode]; !found {
+					// Store the operation mode ID by operation mode
+					e.operationModeIdByOperationMode[operationMode] = operationModeId
+				}
 			}
 		}
 	}
@@ -162,7 +171,7 @@ func (e *CDSF) systemFunctionsDescriptionsUpdate(payload spineapi.EventPayload) 
 			return
 		}
 
-		// Store the system function ID for the DHW system function
+		// Store the system function ID for the DHW system function.
 		e.dhwSystemFunctionId = &systemFunctionIds[0]
 
 		// According to the usecase specification, we need to perform a partial read of hvacSystemFunctionOperationModeRelationListData
@@ -191,6 +200,7 @@ func (e *CDSF) systemFunctionsDescriptionsUpdate(payload spineapi.EventPayload) 
 	}
 }
 
+// dhwCircuitconnected handles the DHW circuit connected event.
 func (e *CDSF) dhwCircuitconnected(entity spineapi.EntityRemoteInterface) {
 	if hvac, err := client.NewHvac(e.LocalEntity, entity); err == nil {
 		if !hvac.HasSubscription() {

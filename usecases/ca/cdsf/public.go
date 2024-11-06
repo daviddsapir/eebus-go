@@ -12,9 +12,15 @@ import (
 
 // OperationModes returns the supported operation modes
 //
+// Parameters:
+//   - entity: The entity to get the operation modes for.
+//
+// Returns:
+//   - The supported operation modes.
+//
 // Possible errors:
 //   - ErrDataNotAvailable: If the supported operation modes are not (yet) available.
-//   - Other errors: Any other errors encountered during the process.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) OperationModes(entity spineapi.EntityRemoteInterface) ([]usecasesapi.HvacOperationModeType, error) {
 	if c.operationModeByOperationModeId == nil {
 		return nil, api.ErrDataNotAvailable
@@ -30,9 +36,12 @@ func (c *CDSF) OperationModes(entity spineapi.EntityRemoteInterface) ([]usecases
 
 // OperationMode returns the current operation mode
 //
+// Parameters:
+//   - entity: The entity to get the operation mode for.
+//
 // Possible errors:
 //   - ErrDataNotAvailable: If the operation mode is not (yet) available.
-//   - Other errors: Any other errors encountered during the process.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) OperationMode(entity spineapi.EntityRemoteInterface) (*usecasesapi.HvacOperationModeType, error) {
 	hvac, err := client.NewHvac(c.LocalEntity, entity)
 	if err != nil {
@@ -60,9 +69,13 @@ func (c *CDSF) OperationMode(entity spineapi.EntityRemoteInterface) (*usecasesap
 
 // WriteOperationMode writes the operation mode
 //
+// Parameters:
+//   - entity: The entity to write the operation mode for.
+//   - operationMode: The operation mode to write.
+//
 // Possible errors:
 //   - ErrDataNotAvailable: If the operation mode is not (yet) available.
-//   - Other errors: Any other errors encountered during the process.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) WriteOperationMode(
 	entity spineapi.EntityRemoteInterface,
 	operationMode usecasesapi.HvacOperationModeType,
@@ -95,9 +108,15 @@ func (c *CDSF) WriteOperationMode(
 	return err
 }
 
-func (c *CDSF) IsOverrunActive(
-	entity spineapi.EntityRemoteInterface,
-) bool {
+// IsOverrunActive returns whether the overrun is active
+//
+// Parameters:
+//   - entity: The entity to check the overrun status for.
+//
+// Possible errors:
+//   - ErrDataNotAvailable: If the overrun status is not (yet) available.
+//   - Other: Any other errors encountered during the process.
+func (c *CDSF) IsOverrunActive(entity spineapi.EntityRemoteInterface) bool {
 	hvac, err := client.NewHvac(c.LocalEntity, entity)
 	if err != nil {
 		return false
@@ -115,6 +134,14 @@ func (c *CDSF) IsOverrunActive(
 	return false
 }
 
+// OverrunStatus returns the overrun status
+//
+// Parameters:
+//   - entity: The entity to get the overrun status for.
+//
+// Possible errors:
+//   - ErrDataNotAvailable: If the overrun status is not (yet) available.
+//   - Other errors: Any other errors encountered during the process.
 func (c *CDSF) OverrunStatus(
 	entity spineapi.EntityRemoteInterface,
 ) (*usecasesapi.HvacOverrunStatusType, error) {
@@ -139,6 +166,15 @@ func (c *CDSF) OverrunStatus(
 	return util.Ptr(usecasesapi.HvacOverrunStatusType(*overrun.OverrunStatus)), nil
 }
 
+// setOverrunState sets the overrun state
+//
+// Parameters:
+//   - entity: The entity to set the overrun state for.
+//   - state: The overrun state to set.
+//
+// Possible errors:
+//   - ErrDataNotAvailable: If the overrun state is not (yet) available.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) setOverrunState(
 	entity spineapi.EntityRemoteInterface,
 	state model.HvacOverrunStatusType,
@@ -166,10 +202,26 @@ func (c *CDSF) setOverrunState(
 	return err
 }
 
+// StartOverrun starts the overrun
+//
+// Parameters:
+//   - entity: The entity to start the overrun for.
+//
+// Possible errors:
+//   - ErrDataNotAvailable: If the overrun state is not (yet) available.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) StartOverrun(entity spineapi.EntityRemoteInterface) error {
 	return c.setOverrunState(entity, model.HvacOverrunStatusTypeActive)
 }
 
+// StopOverrun stops the overrun
+//
+// Parameters:
+//   - entity: The entity to stop the overrun for.
+//
+// Possible errors:
+//   - ErrDataNotAvailable: If the overrun state is not (yet) available.
+//   - Other: Any other errors encountered during the process.
 func (c *CDSF) StopOverrun(entity spineapi.EntityRemoteInterface) error {
 	return c.setOverrunState(entity, model.HvacOverrunStatusTypeInactive)
 }

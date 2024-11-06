@@ -39,19 +39,6 @@ func (h *HvacCommon) GetHvacOperationModeDescriptions() ([]model.HvacOperationMo
 	return operationModeDescriptions, nil
 }
 
-// GetHvacSystemFunctionSetpointRelations returns the operation mode relations (used to map operation modes to setpoints)
-func (h *HvacCommon) GetHvacSystemFunctionSetpointRelations() ([]model.HvacSystemFunctionSetpointRelationDataType, error) {
-	function := model.FunctionTypeHvacSystemFunctionSetPointRelationListData
-	relations := make([]model.HvacSystemFunctionSetpointRelationDataType, 0)
-
-	data, err := featureDataCopyOfType[model.HvacSystemFunctionSetpointRelationListDataType](h.featureLocal, h.featureRemote, function)
-	if err == nil || data != nil {
-		relations = append(relations, data.HvacSystemFunctionSetpointRelationData...)
-	}
-
-	return relations, nil
-}
-
 func (h *HvacCommon) GetHvacSystemFunctionOperationModeRelations() ([]model.HvacSystemFunctionOperationModeRelationDataType, error) {
 	function := model.FunctionTypeHvacSystemFunctionOperationModeRelationListData
 	relations := make([]model.HvacSystemFunctionOperationModeRelationDataType, 0)
@@ -123,9 +110,7 @@ func (h *HvacCommon) GetHvacOverrunDescriptionsForFilter(
 	return descriptions, nil
 }
 
-func (h *HvacCommon) GetHvacOverrunForId(
-	id model.HvacOverrunIdType,
-) (*model.HvacOverrunDataType, error) {
+func (h *HvacCommon) GetHvacOverrunForId(id model.HvacOverrunIdType) (*model.HvacOverrunDataType, error) {
 	function := model.FunctionTypeHvacOverrunListData
 
 	data, err := featureDataCopyOfType[model.HvacOverrunListDataType](h.featureLocal, h.featureRemote, function)
