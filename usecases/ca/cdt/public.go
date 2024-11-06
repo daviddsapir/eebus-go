@@ -50,6 +50,9 @@ func (e *CDT) Setpoints(entity spineapi.EntityRemoteInterface) ([]usecasesapi.Se
 			timePeriod = *setpoint.TimePeriod
 		}
 
+		// As per [Resource Specification] 4.3.23.4 setpointListData:
+		// - isSetpointActive: If false, the setpoint is inactive; if true or omitted, it is active.
+		// - isSetpointChangeable: If true, the server accepts changes; if false, it declines changes. If absent, changes are accepted.
 		isActive := (setpoint.IsSetpointActive == nil || *setpoint.IsSetpointActive)
 		isChangeable := (setpoint.IsSetpointChangeable == nil || *setpoint.IsSetpointChangeable)
 
