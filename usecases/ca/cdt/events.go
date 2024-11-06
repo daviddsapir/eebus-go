@@ -34,6 +34,61 @@ func (e *CDT) HandleEvent(payload spineapi.EventPayload) {
 
 	case *model.SetpointListDataType:
 		e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateSetpoints)
+
+	case *model.HvacSystemFunctionSetpointRelationListDataType,
+		*model.HvacOperationModeDescriptionListDataType:
+		e.mapSetpointsToOperationModes(payload)
+	}
+}
+
+// mapSetpointsToOperationModes maps setpoints to operation modes.
+func (e *CDT) mapSetpointsToOperationModes(payload spineapi.EventPayload) {
+	hvac, err := client.NewHvac(e.LocalEntity, payload.Entity)
+	if err != nil {
+		logging.Log().Debug(err)
+		return
+	}
+
+	// Get the DHW system function.
+	filter := model.HvacSystemFunctionDescriptionDataType{
+		SystemFunctionType: util.Ptr(model.HvacSystemFunctionTypeTypeDhw),
+	}
+	functions, _ := hvac.GetHvacSystemFunctionDescriptionsForFilter(filter)
+	if len(functions) != 1 {
+		logging.Log().Error("Shuold be exactly one DHW system function")
+		return
+	}
+
+	dhwFunctionId := *functions[0].SystemFunctionId
+
+	relations, _ := hvac.GetHvacSystemFunctionSetpointRelationsForSystemFunctionId(dhwFunctionId)
+	descriptions, _ := hvac.GetHvacOperationModeDescriptions()
+	if len(relations) == 0 || len(descriptions) == 0 {
+		return
+	}
+
+	modeForModeId := make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType)
+	for _, description := range descriptions {
+		modeForModeId[*description.OperationModeId] = *description.OperationModeType
+	}
+
+	// Map the setpoints to their respective operation modes.
+	for _, relation := range relations {
+		if mode, found := modeForModeId[*relation.OperationModeId]; found {
+			if len(relation.SetpointId) == 0 {
+				// Only the 'Off' operation mode can have no setpoint associated with it.
+				if mode != model.HvacOperationModeTypeTypeOff {
+					logging.Log().Errorf("Operation mode '%s' has no setpoints", mode)
+				}
+			} else if len(relation.SetpointId) == 1 {
+				// Store the unique setpoint for the operation mode.
+				e.setpointIdForMode[mode] = relation.SetpointId[0]
+			} else if mode != model.HvacOperationModeTypeTypeAuto {
+				// Only the 'Auto' operation mode can have multiple setpoints (1 to 4).
+				// Since 'Auto' mode is not user-controllable, we do not store the setpoints.
+				logging.Log().Errorf("Operation mode '%s' has multiple setpoints", mode)
+			}
+		}
 	}
 }
 

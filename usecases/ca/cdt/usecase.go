@@ -12,7 +12,7 @@ import (
 type CDT struct {
 	*usecase.UseCaseBase
 
-	modes map[model.HvacOperationModeTypeType]model.SetpointIdType
+	setpointIdForMode map[model.HvacOperationModeTypeType]model.SetpointIdType
 }
 
 var _ ucapi.CaCDTInterface = (*CDT)(nil)
@@ -53,8 +53,8 @@ func NewCDT(
 	)
 
 	uc := &CDT{
-		UseCaseBase: usecase,
-		modes:       make(map[model.HvacOperationModeTypeType]model.SetpointIdType),
+		UseCaseBase:       usecase,
+		setpointIdForMode: make(map[model.HvacOperationModeTypeType]model.SetpointIdType),
 	}
 
 	_ = spine.Events.Subscribe(uc)
