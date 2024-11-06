@@ -50,7 +50,7 @@ func (e *CDT) resolveOpModeToSetpointMapping(payload spineapi.EventPayload) {
 
 	// We need both operation mode descriptions and relations to resolve the mapping
 	opModeDescriptions, _ := hvac.GetHvacOperationModeDescriptions()
-	relations, _ := hvac.GetHvacSystemFunctionOperationModeRelations()
+	relations, _ := hvac.GetHvacSystemFunctionSetpointRelations()
 	if len(opModeDescriptions) == 0 || len(relations) == 0 {
 		return
 	}
