@@ -82,9 +82,15 @@ func (h *Hvac) RequestHvacOverruns(
 	return h.requestData(model.FunctionTypeHvacOverrunListData, selector, elements)
 }
 
-func (h *Hvac) WriteHvacSystemFunctions(
-	data []model.HvacSystemFunctionDataType,
-) (*model.MsgCounterType, error) {
+// WriteHvacSystemFunctions writes the given HVAC system functions data to the remote device
+//
+// Parameters:
+//   - data: The HVAC system functions data to write
+//
+// Returns:
+// - The message counter of the sent message
+// - An error if the data could not be written
+func (h *Hvac) WriteHvacSystemFunctions(data []model.HvacSystemFunctionDataType) (*model.MsgCounterType, error) {
 	if len(data) == 0 {
 		return nil, api.ErrMissingData
 	}
@@ -98,6 +104,14 @@ func (h *Hvac) WriteHvacSystemFunctions(
 	return h.remoteDevice.Sender().Write(h.featureLocal.Address(), h.featureRemote.Address(), cmd)
 }
 
+// WriteHvacOverruns writes the given HVAC overruns data to the remote device
+//
+// Parameters:
+// - data: The HVAC overruns data to write
+//
+// Returns:
+// - The message counter of the sent message
+// - An error if the data could not be written
 func (h *Hvac) WriteHvacOverruns(data []model.HvacOverrunDataType) (*model.MsgCounterType, error) {
 	if len(data) == 0 {
 		return nil, api.ErrMissingData

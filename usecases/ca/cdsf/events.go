@@ -44,15 +44,15 @@ func (e *CDSF) HandleEvent(payload spineapi.EventPayload) {
 	}
 }
 
-// updateOverruns handles the overruns update event.
 func (e *CDSF) updateOverruns(payload spineapi.EventPayload) {
-	if e.overrunId == nil {
+	if e.oneTimeDhwOverrunId == nil {
+		logging.Log().Error("OneTimeDhw overrun ID is not set")
 		return
 	}
 
 	overruns, _ := payload.Data.(*model.HvacOverrunListDataType)
 	for _, overrun := range overruns.HvacOverrunData {
-		if overrun.OverrunId == nil || *overrun.OverrunId == *e.overrunId {
+		if overrun.OverrunId == nil || *overrun.OverrunId == *e.oneTimeDhwOverrunId {
 			e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateOverrunStatus)
 		}
 	}
@@ -96,15 +96,15 @@ func (e *CDSF) updateOverrunDescriptions(payload spineapi.EventPayload) {
 		return
 	}
 	if len(descriptions) != 1 {
-		logging.Log().Errorf("Expected exactly one DHW overrun description for oneTimeDhw system function. Got %d", len(descriptions))
+		logging.Log().Errorf("Expected exactly one overrun description for oneTimeDhw overrun type. Got %d", len(descriptions))
 		return
 	}
 
 	// Store the overrun ID for the "oneTimeDhw" overrun type.
-	e.overrunId = descriptions[0].OverrunId
+	e.oneTimeDhwOverrunId = descriptions[0].OverrunId
 
 	selector := &model.HvacOverrunListDataSelectorsType{
-		OverrunId: e.overrunId,
+		OverrunId: e.oneTimeDhwOverrunId,
 	}
 	if _, err := hvac.RequestHvacOverruns(selector, nil); err != nil {
 		logging.Log().Debug(err)
@@ -126,24 +126,19 @@ func (e *CDSF) updateOperationModes(payload spineapi.EventPayload) {
 		return
 	}
 
+	clear(e.operationModeByOperationModeId)
+	clear(e.operationModeIdByOperationMode)
+
 	operationModeById := make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType)
 	for _, description := range descriptions {
 		operationModeById[*description.OperationModeId] = *description.OperationModeType
 	}
 
-	clear(e.operationModeByOperationModeId)
 	for _, relation := range relations {
 		for _, operationModeId := range relation.OperationModeId {
 			if operationMode, found := operationModeById[operationModeId]; found {
-				if _, found := e.operationModeByOperationModeId[operationModeId]; !found {
-					// Store the operation mode by operation mode ID
-					e.operationModeByOperationModeId[operationModeId] = operationMode
-				}
-
-				if _, found := e.operationModeIdByOperationMode[operationMode]; !found {
-					// Store the operation mode ID by operation mode
-					e.operationModeIdByOperationMode[operationMode] = operationModeId
-				}
+				e.operationModeByOperationModeId[operationModeId] = operationMode
+				e.operationModeIdByOperationMode[operationMode] = operationModeId
 			}
 		}
 	}

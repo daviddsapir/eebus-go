@@ -36,7 +36,7 @@ type CaCDSFInterface interface {
 	//   - and others
 	OperationMode(entity spineapi.EntityRemoteInterface) (*HvacOperationModeType, error)
 
-	// write the operation mode
+	// Write the operation mode
 	//
 	// parameters:
 	//   - entity: the entity to get the setpoints data from
@@ -48,26 +48,6 @@ type CaCDSFInterface interface {
 	WriteOperationMode(entity spineapi.EntityRemoteInterface, operationMode HvacOperationModeType) error
 
 	// Scenario 2
-
-	// Returns if an HVAC overrun is currently active.
-	//
-	// parameters:
-	//   - entity: the entity to get the setpoints data from
-	//
-	// possible errors:
-	//   - ErrDataNotAvailable if the operation modes are not (yet) available
-	//   - and others
-	IsOverrunActive(entity spineapi.EntityRemoteInterface) bool
-
-	// Returns the current HVAC overrun status.
-	//
-	// parameters:
-	//   - entity: the entity to get the setpoints data from
-	//
-	// possible errors:
-	//   - ErrDataNotAvailable if the overrun status is not (yet) available
-	//   - and others
-	OverrunStatus(entity spineapi.EntityRemoteInterface) (*HvacOverrunStatusType, error)
 
 	// Start Overrun
 	//
@@ -90,4 +70,26 @@ type CaCDSFInterface interface {
 	//   - ErrDataNotAvailable if the overrun status is not (yet) available
 	//   - and others
 	StopOverrun(entity spineapi.EntityRemoteInterface) error
+
+	// Scenario 2 and 3
+
+	// Returns if an HVAC overrun is currently active.
+	//
+	// parameters:
+	//   - entity: the entity to get the setpoints data from
+	//
+	// possible errors:
+	//   - ErrDataNotAvailable if the operation modes are not (yet) available
+	//   - and others
+	IsOverrunActive(entity spineapi.EntityRemoteInterface) bool
+
+	// Returns the current HVAC overrun status.
+	//
+	// parameters:
+	//   - entity: the entity to get the setpoints data from
+	//
+	// possible errors:
+	//   - ErrDataNotAvailable if the overrun status is not (yet) available
+	//   - and others
+	OverrunStatus(entity spineapi.EntityRemoteInterface) (*HvacOverrunStatusType, error)
 }

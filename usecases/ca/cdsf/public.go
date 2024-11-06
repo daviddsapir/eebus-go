@@ -150,11 +150,11 @@ func (c *CDSF) OverrunStatus(
 		return nil, err
 	}
 
-	if c.overrunId == nil {
+	if c.oneTimeDhwOverrunId == nil {
 		return nil, api.ErrDataNotAvailable
 	}
 
-	overrun, err := hvac.GetHvacOverrunForId(*c.overrunId)
+	overrun, err := hvac.GetHvacOverrunForId(*c.oneTimeDhwOverrunId)
 	if err != nil {
 		return nil, err
 	}
@@ -184,12 +184,12 @@ func (c *CDSF) setOverrunState(
 		return err
 	}
 
-	if c.overrunId == nil {
+	if c.oneTimeDhwOverrunId == nil {
 		return api.ErrDataNotAvailable
 	}
 
 	overrunData := model.HvacOverrunDataType{
-		OverrunId:     c.overrunId,
+		OverrunId:     c.oneTimeDhwOverrunId,
 		OverrunStatus: util.Ptr(model.HvacOverrunStatusType(state)),
 	}
 

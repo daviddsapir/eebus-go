@@ -14,7 +14,7 @@ type CDSF struct {
 	*usecase.UseCaseBase
 
 	dhwSystemFunctionId            *model.HvacSystemFunctionIdType
-	overrunId                      *model.HvacOverrunIdType
+	oneTimeDhwOverrunId            *model.HvacOverrunIdType
 	operationModeByOperationModeId map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType
 	operationModeIdByOperationMode map[model.HvacOperationModeTypeType]model.HvacOperationModeIdType
 }
