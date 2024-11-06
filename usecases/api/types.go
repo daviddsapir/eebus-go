@@ -20,10 +20,10 @@ const (
 type HvacOperationModeType string
 
 const (
-	HvacOperationModeTypeTypeAuto HvacOperationModeType = "auto"
-	HvacOperationModeTypeTypeOn   HvacOperationModeType = "on"
-	HvacOperationModeTypeTypeOff  HvacOperationModeType = "off"
-	HvacOperationModeTypeTypeEco  HvacOperationModeType = "eco"
+	HvacOperationModeTypeAuto HvacOperationModeType = "auto"
+	HvacOperationModeTypeOn   HvacOperationModeType = "on"
+	HvacOperationModeTypeOff  HvacOperationModeType = "off"
+	HvacOperationModeTypeEco  HvacOperationModeType = "eco"
 )
 
 type HvacOverrunStatusType string

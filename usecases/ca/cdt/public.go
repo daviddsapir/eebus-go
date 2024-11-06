@@ -5,6 +5,7 @@ import (
 	"github.com/enbility/eebus-go/features/client"
 	usecasesapi "github.com/enbility/eebus-go/usecases/api"
 	"github.com/enbility/ship-go/logging"
+	"github.com/enbility/ship-go/util"
 	spineapi "github.com/enbility/spine-go/api"
 	"github.com/enbility/spine-go/model"
 )
@@ -125,6 +126,65 @@ func (e *CDT) SetpointConstraints(entity spineapi.EntityRemoteInterface) ([]usec
 }
 
 // WriteSetpoint sets the temperature setpoint for a specified HVAC operation mode on a remote entity.
+// mapSetpointsToOperationModes maps setpoints to their respective operation modes.
+func (e *CDT) mapSetpointsToModes(entity spineapi.EntityRemoteInterface) error {
+	hvac, err := client.NewHvac(e.LocalEntity, entity)
+	if err != nil {
+		return err
+	}
+
+	// Get the DHW system functionId for the DHW system function.
+	filter := model.HvacSystemFunctionDescriptionDataType{
+		SystemFunctionType: util.Ptr(model.HvacSystemFunctionTypeTypeDhw),
+	}
+	functions, _ := hvac.GetHvacSystemFunctionDescriptionsForFilter(filter)
+	if len(functions) == 0 {
+		return api.ErrDataNotAvailable
+	}
+
+	functionId := *functions[0].SystemFunctionId
+
+	// Get the relations between operation modes and setpoints for the DHW system function.
+	relations, _ := hvac.GetHvacSystemFunctionSetpointRelationsForSystemFunctionId(functionId)
+	if len(relations) == 0 {
+		return api.ErrDataNotAvailable
+	}
+
+	// Get the operation mode descriptions for the operation modes in the relations.
+	descriptions, _ := hvac.GetHvacOperationModeDescriptions()
+	if len(descriptions) == 0 {
+		return api.ErrDataNotAvailable
+	}
+
+	// Create a mapping to get the operation mode descriptions by operation mode ID.
+	modeDescriptions := make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType)
+	for _, description := range descriptions {
+		modeDescriptions[*description.OperationModeId] = *description.OperationModeType
+	}
+
+	// Map the setpoints to their respective operation modes.
+	for _, relation := range relations {
+		if mode, found := modeDescriptions[*relation.OperationModeId]; found {
+			if len(relation.SetpointId) == 0 {
+				// Only the 'Off' operation mode can have no setpoint associated with it.
+				if mode != model.HvacOperationModeTypeTypeOff {
+					logging.Log().Errorf("Operation mode '%s' has no setpoints", mode)
+				}
+			} else if len(relation.SetpointId) == 1 {
+				// Unique 1:1 mapping of operation mode to setpoint.
+				e.modes[mode] = relation.SetpointId[0]
+			} else {
+				if mode != model.HvacOperationModeTypeTypeAuto {
+					logging.Log().Errorf("Operation mode '%s' has multiple setpoints", mode)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// WriteSetpoint sets the temperature setpoint for a specific operation mode.
 //
 // Possible errors:
 //   - ErrDataNotAvailable: If the mapping of operation modes to setpoints is not available.
@@ -140,6 +200,21 @@ func (e *CDT) WriteSetpoint(
 	}
 
 	setpointId, found := e.operationModeToSetpoint[mode]
+	mode usecasesapi.HvacOperationModeType,
+	temperature float64,
+) error {
+	if model.HvacOperationModeTypeType(mode) == model.HvacOperationModeTypeTypeAuto {
+		// 'Auto' mode is controlled by a timetable, meaning the current setpoint
+		// for the HVAC system function changes according to the timetable.
+		// Only the 'Off', 'On', and 'Eco' modes can be directly controlled by a setpoint.
+		return nil
+	}
+
+	if len(e.modes) == 0 && e.mapSetpointsToModes(entity) != nil {
+		return api.ErrDataNotAvailable
+	}
+
+	setpointId, found := e.modes[model.HvacOperationModeTypeType(mode)]
 	if !found {
 		return api.ErrDataNotAvailable
 	}
@@ -153,6 +228,7 @@ func (e *CDT) WriteSetpoint(
 		{
 			SetpointId: &setpointId,
 			Value:      model.NewScaledNumberType(degC),
+			Value:      model.NewScaledNumberType(temperature),
 		},
 	}
 

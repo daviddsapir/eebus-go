@@ -9,12 +9,10 @@ import (
 	"github.com/enbility/spine-go/spine"
 )
 
-// Optimization of Heat Pump Compressor Function
 type CDT struct {
 	*usecase.UseCaseBase
 
-	// Maps operation mode IDs to setpoint IDs
-	operationModeToSetpoint map[model.HvacOperationModeTypeType]model.SetpointIdType
+	modes map[model.HvacOperationModeTypeType]model.SetpointIdType
 }
 
 var _ ucapi.CaCDTInterface = (*CDT)(nil)
@@ -55,8 +53,8 @@ func NewCDT(
 	)
 
 	uc := &CDT{
-		UseCaseBase:             usecase,
-		operationModeToSetpoint: make(map[model.HvacOperationModeTypeType]model.SetpointIdType),
+		UseCaseBase: usecase,
+		modes:       make(map[model.HvacOperationModeTypeType]model.SetpointIdType),
 	}
 
 	_ = spine.Events.Subscribe(uc)

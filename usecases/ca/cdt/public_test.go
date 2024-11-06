@@ -173,8 +173,8 @@ func (s *CaCDTSuite) Test_WriteSetpoint() {
 	assert.NotNil(s.T(), err)
 
 	// Create a mapping of operation modes to setpoints
-	s.sut.operationModeToSetpoint = map[model.HvacOperationModeTypeType]model.SetpointIdType{
-		model.HvacOperationModeTypeTypeOn: *setpoint.SetpointId,
+	s.sut.modes = map[model.HvacOperationModeTypeType]model.SetpointIdType{
+		model.HvacOperationModeTypeTypeOn: 1,
 	}
 
 	// Test case: Setpoint and operation mode mapping available - the write should succeed

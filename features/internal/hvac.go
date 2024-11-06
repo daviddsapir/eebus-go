@@ -64,6 +64,29 @@ func (h *HvacCommon) GetHvacSystemFunctionOperationModeRelations() ([]model.Hvac
 	return relations, nil
 }
 
+// GetHvacSystemFunctionSetpointRelations returns the operation mode relations for a given system function id
+func (h *HvacCommon) GetHvacSystemFunctionSetpointRelationsForSystemFunctionId(
+	id model.HvacSystemFunctionIdType,
+) ([]model.HvacSystemFunctionSetpointRelationDataType, error) {
+	function := model.FunctionTypeHvacSystemFunctionSetPointRelationListData
+	filter := model.HvacSystemFunctionSetpointRelationDataType{
+		SystemFunctionId: &id,
+	}
+
+	data, err := featureDataCopyOfType[model.HvacSystemFunctionSetpointRelationListDataType](h.featureLocal, h.featureRemote, function)
+	if err != nil || data == nil || data.HvacSystemFunctionSetpointRelationData == nil {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	result := searchFilterInList[model.HvacSystemFunctionSetpointRelationDataType](data.HvacSystemFunctionSetpointRelationData, filter)
+	if len(result) == 0 {
+		return nil, api.ErrDataNotAvailable
+	}
+
+	return result, nil
+}
+
+// GetHvacSystemFunctionDescriptions returns the system function descriptions for a given filter
 func (h *HvacCommon) GetHvacSystemFunctionDescriptionsForFilter(
 	filter model.HvacSystemFunctionDescriptionDataType,
 ) ([]model.HvacSystemFunctionDescriptionDataType, error) {
@@ -143,4 +166,7 @@ func (h *HvacCommon) GetHvacOverrunForId(
 	}
 
 	return util.Ptr(overruns[0]), nil
+	result := searchFilterInList[model.HvacSystemFunctionDescriptionDataType](data.HvacSystemFunctionDescriptionData, filter)
+
+	return result, nil
 }
