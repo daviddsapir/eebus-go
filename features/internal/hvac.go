@@ -166,7 +166,4 @@ func (h *HvacCommon) GetHvacOverrunForId(
 	}
 
 	return util.Ptr(overruns[0]), nil
-	result := searchFilterInList[model.HvacSystemFunctionDescriptionDataType](data.HvacSystemFunctionDescriptionData, filter)
-
-	return result, nil
 }

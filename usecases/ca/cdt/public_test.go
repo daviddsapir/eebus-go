@@ -1,6 +1,7 @@
 package cdt
 
 import (
+	usecasesapi "github.com/enbility/eebus-go/usecases/api"
 	"github.com/enbility/ship-go/util"
 	"github.com/enbility/spine-go/model"
 	"github.com/stretchr/testify/assert"
@@ -137,7 +138,7 @@ func (s *CaCDTSuite) Test_SetpointConstraints() {
 // Test_WriteSetpoint verifies the functionality of writing a setpoint to a remote entity.
 func (s *CaCDTSuite) Test_WriteSetpoint() {
 	// Test case: No setpoints available for mock remote entity
-	err := s.sut.WriteSetpoint(s.mockRemoteEntity, model.HvacOperationModeTypeTypeOn, 35.0)
+	err := s.sut.WriteSetpoint(s.mockRemoteEntity, usecasesapi.HvacOperationModeTypeOn, 35.0)
 	assert.NotNil(s.T(), err)
 
 	// Create a setpoint
@@ -169,7 +170,7 @@ func (s *CaCDTSuite) Test_WriteSetpoint() {
 	assert.Nil(s.T(), fErr)
 
 	// Test case: No mapping of operation modes to setpoints available
-	err = s.sut.WriteSetpoint(s.cdtEntity, model.HvacOperationModeTypeTypeOn, 35.0)
+	err = s.sut.WriteSetpoint(s.cdtEntity, usecasesapi.HvacOperationModeTypeOn, 35.0)
 	assert.NotNil(s.T(), err)
 
 	// Create a mapping of operation modes to setpoints
@@ -178,6 +179,6 @@ func (s *CaCDTSuite) Test_WriteSetpoint() {
 	}
 
 	// Test case: Setpoint and operation mode mapping available - the write should succeed
-	err = s.sut.WriteSetpoint(s.cdtEntity, model.HvacOperationModeTypeTypeOn, 35.0)
+	err = s.sut.WriteSetpoint(s.cdtEntity, usecasesapi.HvacOperationModeTypeOn, 35.0)
 	assert.Nil(s.T(), err)
 }

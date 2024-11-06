@@ -34,59 +34,6 @@ func (e *CDT) HandleEvent(payload spineapi.EventPayload) {
 
 	case *model.SetpointListDataType:
 		e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateSetpoints)
-
-	case *model.HvacOperationModeDescriptionListDataType,
-		*model.HvacSystemFunctionSetpointRelationListDataType:
-		e.resolveOpModeToSetpointMapping(payload)
-	}
-}
-
-// resolveOpModeToSetpointMapping resolves the mapping between operation modes and setpoints.
-func (e *CDT) resolveOpModeToSetpointMapping(payload spineapi.EventPayload) {
-	hvac, err := client.NewHvac(e.LocalEntity, payload.Entity)
-	if err != nil {
-		logging.Log().Debug(err)
-	}
-
-	// We need both operation mode descriptions and relations to resolve the mapping
-	opModeDescriptions, _ := hvac.GetHvacOperationModeDescriptions()
-	relations, _ := hvac.GetHvacSystemFunctionSetpointRelations()
-	if len(opModeDescriptions) == 0 || len(relations) == 0 {
-		return
-	}
-
-	clear(e.operationModeToSetpoint)
-
-	// Create a mapping between operation mode IDs and operation modes
-	operationModeIdToOperationMode := make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType)
-	for _, opModeDescription := range opModeDescriptions {
-		modeId := opModeDescription.OperationModeId
-		mode := opModeDescription.OperationModeType
-		operationModeIdToOperationMode[*modeId] = *mode
-	}
-
-	// Create a mapping between operation modes and setpoint IDs
-	operationModeToSetpoint := make(map[model.HvacOperationModeTypeType][]model.SetpointIdType)
-	for _, relation := range relations {
-		mode := operationModeIdToOperationMode[*relation.OperationModeId]
-		operationModeToSetpoint[mode] = append(operationModeToSetpoint[mode], relation.SetpointId...)
-	}
-
-	for mode, setpointIDs := range operationModeToSetpoint {
-		if len(setpointIDs) != 1 {
-			if mode == model.HvacOperationModeTypeTypeAuto {
-				// For the "auto" operation mode, multiple setpoints (up to four) are allowed as per the specification
-				logging.Log().Debugf("Operation mode %s cycles between %d setpoints", mode, len(setpointIDs))
-			} else {
-				// For other operation modes, having multiple setpoints is not allowed
-				// but not explicitly considered an error according to the specification
-				logging.Log().Errorf("Operation mode %s has %d setpoint IDs", mode, len(setpointIDs))
-			}
-			continue
-		}
-
-		// Save the unique 1:1 mapping between the operation mode and its corresponding setpoint ID
-		e.operationModeToSetpoint[mode] = setpointIDs[0]
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 	"github.com/enbility/spine-go/model"
 )
 
-// Setpoints retrieves the setpoints for various HVAC operation modes from a remote entity.
+// Setpoints returns the setpoints.
 //
 // Possible errors:
 //   - ErrDataNotAvailable: If the mapping of operation modes to setpoints or the setpoints themselves are not available.
@@ -50,6 +50,9 @@ func (e *CDT) Setpoints(entity spineapi.EntityRemoteInterface) ([]usecasesapi.Se
 			timePeriod = *setpoint.TimePeriod
 		}
 
+		// As per [Resource Specification] 4.3.23.4 setpointListData:
+		// - isSetpointActive: If false, the setpoint is inactive; if true or omitted, it is active.
+		// - isSetpointChangeable: If true, the server accepts changes; if false, it declines changes. If absent, changes are accepted.
 		isActive := (setpoint.IsSetpointActive == nil || *setpoint.IsSetpointActive)
 		isChangeable := (setpoint.IsSetpointChangeable == nil || *setpoint.IsSetpointChangeable)
 
@@ -73,7 +76,7 @@ func (e *CDT) Setpoints(entity spineapi.EntityRemoteInterface) ([]usecasesapi.Se
 	return setpoints, nil
 }
 
-// SetpointConstraints retrieves the setpoint constraints for various HVAC operation modes from a remote entity.
+// SetpointConstraints returns the setpoint constraints.
 //
 // Possible errors:
 //   - ErrDataNotAvailable: If the mapping of operation modes to setpoints or the setpoint constraints are not available.
@@ -125,7 +128,6 @@ func (e *CDT) SetpointConstraints(entity spineapi.EntityRemoteInterface) ([]usec
 	return setpointConstraints, nil
 }
 
-// WriteSetpoint sets the temperature setpoint for a specified HVAC operation mode on a remote entity.
 // mapSetpointsToOperationModes maps setpoints to their respective operation modes.
 func (e *CDT) mapSetpointsToModes(entity spineapi.EntityRemoteInterface) error {
 	hvac, err := client.NewHvac(e.LocalEntity, entity)
@@ -192,14 +194,6 @@ func (e *CDT) mapSetpointsToModes(entity spineapi.EntityRemoteInterface) error {
 //   - Other errors: Any other errors encountered during the process.
 func (e *CDT) WriteSetpoint(
 	entity spineapi.EntityRemoteInterface,
-	mode model.HvacOperationModeTypeType,
-	degC float64,
-) error {
-	if mode == model.HvacOperationModeTypeTypeAuto {
-		return nil
-	}
-
-	setpointId, found := e.operationModeToSetpoint[mode]
 	mode usecasesapi.HvacOperationModeType,
 	temperature float64,
 ) error {
@@ -227,7 +221,6 @@ func (e *CDT) WriteSetpoint(
 	setpointToWrite := []model.SetpointDataType{
 		{
 			SetpointId: &setpointId,
-			Value:      model.NewScaledNumberType(degC),
 			Value:      model.NewScaledNumberType(temperature),
 		},
 	}
