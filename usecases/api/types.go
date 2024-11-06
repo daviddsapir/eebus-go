@@ -17,6 +17,15 @@ const (
 	EVChargeStateTypeFinished  EVChargeStateType = "finished"
 )
 
+type HvacOperationModeType string
+
+const (
+	HvacOperationModeTypeTypeAuto HvacOperationModeType = "auto"
+	HvacOperationModeTypeTypeOn   HvacOperationModeType = "on"
+	HvacOperationModeTypeTypeOff  HvacOperationModeType = "off"
+	HvacOperationModeTypeTypeEco  HvacOperationModeType = "eco"
+)
+
 // Defines a phase specific limit data set
 type LoadLimitsPhase struct {
 	Phase        model.ElectricalConnectionPhaseNameType // the phase
