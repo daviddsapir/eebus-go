@@ -18,7 +18,7 @@ import (
 	"github.com/enbility/eebus-go/service"
 	ucapi "github.com/enbility/eebus-go/usecases/api"
 	"github.com/enbility/eebus-go/usecases/eg/lpc"
-	"github.com/enbility/eebus-go/usecases/eg/lpp"
+	"github.com/enbility/eebus-go/usecases/ma/mpc"
 	shipapi "github.com/enbility/ship-go/api"
 	"github.com/enbility/ship-go/cert"
 	spineapi "github.com/enbility/spine-go/api"
@@ -31,7 +31,8 @@ type controlbox struct {
 	myService *service.Service
 
 	uclpc ucapi.EgLPCInterface
-	uclpp ucapi.EgLPPInterface
+	// uclpp ucapi.EgLPPInterface
+	ucmpc ucapi.MaMPCInterface
 
 	isConnected bool
 }
@@ -75,15 +76,18 @@ func (h *controlbox) run() {
 	}
 
 	configuration, err := api.NewConfiguration(
-		"Demo", "Demo", "ControlBox", "123456789",
-		[]shipapi.DeviceCategoryType{shipapi.DeviceCategoryTypeGridConnectionHub},
-		model.DeviceTypeTypeElectricitySupplySystem,
-		[]model.EntityTypeType{model.EntityTypeTypeGridGuard},
+		"Bosch", "eebus-go", "myHP", "12345678",
+		[]shipapi.DeviceCategoryType{shipapi.DeviceCategoryTypeHVAC},
+		//JH model.DeviceTypeTypeElectricitySupplySystem,
+		model.DeviceTypeTypeGeneric,
+		// []model.EntityTypeType{model.EntityTypeTypeGridGuard},
+		[]model.EntityTypeType{model.EntityTypeTypeHeatPumpAppliance},
 		port, certificate, time.Second*60)
 	if err != nil {
 		log.Fatal(err)
 	}
-	configuration.SetAlternateIdentifier("Demo-ControlBox-123456789")
+	// configuration.SetAlternateIdentifier("Demo-ControlBox-123456789")
+	configuration.SetAlternateIdentifier("Bosch-myHP-12345678")
 
 	h.myService = service.NewService(configuration, h)
 	h.myService.SetLogging(h)
@@ -96,9 +100,11 @@ func (h *controlbox) run() {
 	localEntity := h.myService.LocalDevice().EntityForType(model.EntityTypeTypeGridGuard)
 	h.uclpc = lpc.NewLPC(localEntity, h.OnLPCEvent)
 	h.myService.AddUseCase(h.uclpc)
+	// h.uclpp = lpp.NewLPP(localEntity, h.OnLPPEvent)
+	// h.myService.AddUseCase(h.uclpp)
 
-	h.uclpp = lpp.NewLPP(localEntity, h.OnLPPEvent)
-	h.myService.AddUseCase(h.uclpp)
+	h.ucmpc = mpc.NewMPC(localEntity, h.OnMPCEvent)
+	h.myService.AddUseCase(h.ucmpc)
 
 	if len(remoteSki) == 0 {
 		os.Exit(0)
@@ -151,9 +157,9 @@ func (h *controlbox) sendLimit(entity spineapi.EntityRemoteInterface) {
 	fmt.Println("Sending a limit in 5s...")
 	time.AfterFunc(time.Second*5, func() {
 		limit := ucapi.LoadLimit{
-			Duration: time.Hour*1 + time.Minute*2 + time.Second*3,
+			Duration: time.Minute * 2,
 			IsActive: true,
-			Value:    100,
+			Value:    7000,
 		}
 
 		resultCB := func(msg model.ResultDataType) {
@@ -205,13 +211,35 @@ func (h *controlbox) OnLPPEvent(ski string, device spineapi.DeviceRemoteInterfac
 	}
 }
 
+// JH experimental ----------------------------------------
+func (h *controlbox) OnMPCEvent(ski string, device spineapi.DeviceRemoteInterface, entity spineapi.EntityRemoteInterface, event api.EventType) {
+	if !h.isConnected {
+		return
+	}
+
+	switch event {
+	case mpc.DataUpdateEnergyConsumed: //.UseCaseSupportUpdate:
+		fmt.Println("EVENT: DataUpdateEnergyConsumed")
+		// TODO h.sendLimit(entity)
+	case mpc.DataUpdatePower: //UpdateLimit:
+		fmt.Println("EVENT: DataUpdatePower")
+		// if currentLimit, err := h.uclpc.ConsumptionLimit(entity); err == nil {
+		//	 fmt.Println("New Limit received", currentLimit.Value, "W")
+		// }
+	default:
+		return
+	}
+}
+
+// JH experimental ----------------------------------------
+
 // main app
 func usage() {
 	fmt.Println("First Run:")
-	fmt.Println("  go run /cmd/controlbox/main.go <serverport>")
+	fmt.Println("  go run /examples/controlbox/main.go <serverport>")
 	fmt.Println()
 	fmt.Println("General Usage:")
-	fmt.Println("  go run /cmd/controlbox/main.go <serverport> <remoteski> <crtfile> <keyfile>")
+	fmt.Println("  go run /examples/controlbox/main.go <serverport> <cem-ski> <crtfile> <keyfile>")
 }
 
 func main() {

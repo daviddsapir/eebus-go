@@ -170,10 +170,10 @@ func (h *evse) OnLPCEvent(ski string, device spineapi.DeviceRemoteInterface, ent
 // main app
 func usage() {
 	fmt.Println("First Run:")
-	fmt.Println("  go run /cmd/evse/main.go <serverport>")
+	fmt.Println("  go run /examples/evse/main.go <serverport>")
 	fmt.Println()
 	fmt.Println("General Usage:")
-	fmt.Println("  go run /cmd/evse/main.go <serverport> <remoteski> <crtfile> <keyfile>")
+	fmt.Println("  go run /examples/evse/main.go <serverport> <remoteski> <crtfile> <keyfile>")
 }
 
 func main() {

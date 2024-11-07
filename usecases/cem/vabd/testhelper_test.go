@@ -156,7 +156,7 @@ func setupDevices(
 						Device: util.Ptr(model.AddressDeviceType(remoteDeviceName)),
 						Entity: []model.AddressEntityType{1},
 					},
-					EntityType: util.Ptr(model.EntityTypeTypeElectricityStorageSystem),
+					EntityType: util.Ptr(model.EntityTypeTypeBatterySystem),
 				},
 			},
 		},
