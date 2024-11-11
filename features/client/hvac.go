@@ -34,6 +34,14 @@ func NewHvac(
 	return hvac, nil
 }
 
+// request FunctionTypeHvacSystemFunctionSetPointRelationListData from a remote device
+func (h *Hvac) RequestHvacSystemFunctionSetPointRelations(
+	selector *model.HvacSystemFunctionSetpointRelationListDataSelectorsType,
+	elements *model.HvacSystemFunctionSetpointRelationDataElementsType,
+) (*model.MsgCounterType, error) {
+	return h.requestData(model.FunctionTypeHvacSystemFunctionSetPointRelationListData, selector, elements)
+}
+
 // request FunctionTypeHvacOperationModeDescriptionListData from a remote device
 func (h *Hvac) RequestHvacOperationModeDescriptions(
 	selector *model.HvacOperationModeDescriptionListDataSelectorsType,
