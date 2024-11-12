@@ -17,23 +17,21 @@ const (
 	EVChargeStateTypeFinished  EVChargeStateType = "finished"
 )
 
-type HvacOperationModeType string
-
-const (
-	HvacOperationModeTypeAuto HvacOperationModeType = "auto"
-	HvacOperationModeTypeOn   HvacOperationModeType = "on"
-	HvacOperationModeTypeOff  HvacOperationModeType = "off"
-	HvacOperationModeTypeEco  HvacOperationModeType = "eco"
-)
-
-type HvacOverrunStatusType string
-
-const (
-	HvacOverrunStatusTypeActive   HvacOverrunStatusType = "active"
-	HvacOverrunStatusTypeRunning  HvacOverrunStatusType = "running"
-	HvacOverrunStatusTypeFinished HvacOverrunStatusType = "finished"
-	HvacOverrunStatusTypeInactive HvacOverrunStatusType = "inactive"
-)
+// manufacturer data type
+type ManufacturerData struct {
+	DeviceName                     string
+	DeviceCode                     string
+	SerialNumber                   string
+	SoftwareRevision               string
+	HardwareRevision               string
+	VendorName                     string
+	VendorCode                     string
+	BrandName                      string
+	PowerSource                    string
+	ManufacturerNodeIdentification string
+	ManufacturerLabel              string
+	ManufacturerDescription        string
+}
 
 // Defines a phase specific limit data set
 type LoadLimitsPhase struct {
