@@ -34,5 +34,6 @@ Actors:
 
   Use Cases:
   - `mpc`: Monitoring of Power Consumption
+  - `mot`: Monitoring of Outdoor Temperature
   - `mgcp`: Monitoring of Grid Connection Point
   - `mdt`: Monitoring of DHW Temperature
