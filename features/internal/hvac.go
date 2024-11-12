@@ -52,6 +52,7 @@ func (h *HvacCommon) GetHvacSystemFunctionSetpointRelations() ([]model.HvacSyste
 	return relations, nil
 }
 
+// GetHvacSystemFunctionOperationModeRelations returns the operation mode relations
 func (h *HvacCommon) GetHvacSystemFunctionOperationModeRelations() ([]model.HvacSystemFunctionOperationModeRelationDataType, error) {
 	function := model.FunctionTypeHvacSystemFunctionOperationModeRelationListData
 	relations := make([]model.HvacSystemFunctionOperationModeRelationDataType, 0)
@@ -87,6 +88,7 @@ func (h *HvacCommon) GetHvacSystemFunctionSetpointRelationsForSystemFunctionId(
 }
 
 // GetHvacSystemFunctionDescriptions returns the system function descriptions for a given filter
+// GetHvacSystemFunctionDescriptionsForFilter returns the system function descriptions for a given filter
 func (h *HvacCommon) GetHvacSystemFunctionDescriptionsForFilter(
 	filter model.HvacSystemFunctionDescriptionDataType,
 ) ([]model.HvacSystemFunctionDescriptionDataType, error) {
@@ -102,9 +104,8 @@ func (h *HvacCommon) GetHvacSystemFunctionDescriptionsForFilter(
 	return descriptions, nil
 }
 
-func (h *HvacCommon) GetHvacSystemFunctionForId(
-	id model.HvacSystemFunctionIdType,
-) (*model.HvacSystemFunctionDataType, error) {
+// GetHvacSystemFunctionForId returns the system function for a given ID
+func (h *HvacCommon) GetHvacSystemFunctionForId(id model.HvacSystemFunctionIdType) (*model.HvacSystemFunctionDataType, error) {
 	function := model.FunctionTypeHvacSystemFunctionListData
 	filter := model.HvacSystemFunctionDataType{
 		SystemFunctionId: util.Ptr(id),
@@ -120,6 +121,7 @@ func (h *HvacCommon) GetHvacSystemFunctionForId(
 	return util.Ptr(systemFunction[0]), nil
 }
 
+// GetHvacSystemFunctions returns the system functions
 func (h *HvacCommon) GetHvacSystemFunctions() ([]model.HvacSystemFunctionDataType, error) {
 	function := model.FunctionTypeHvacSystemFunctionListData
 
