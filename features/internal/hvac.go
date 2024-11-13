@@ -87,7 +87,6 @@ func (h *HvacCommon) GetHvacSystemFunctionSetpointRelationsForSystemFunctionId(
 	return result, nil
 }
 
-// GetHvacSystemFunctionDescriptions returns the system function descriptions for a given filter
 // GetHvacSystemFunctionDescriptionsForFilter returns the system function descriptions for a given filter
 func (h *HvacCommon) GetHvacSystemFunctionDescriptionsForFilter(
 	filter model.HvacSystemFunctionDescriptionDataType,
