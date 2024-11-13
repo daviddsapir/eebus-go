@@ -16,10 +16,13 @@ import (
 	"github.com/enbility/eebus-go/api"
 	"github.com/enbility/eebus-go/service"
 	ucapi "github.com/enbility/eebus-go/usecases/api"
+	"github.com/enbility/eebus-go/usecases/cem/vabd"
+	"github.com/enbility/eebus-go/usecases/cem/vapd"
 	cslpc "github.com/enbility/eebus-go/usecases/cs/lpc"
 	cslpp "github.com/enbility/eebus-go/usecases/cs/lpp"
 	eglpc "github.com/enbility/eebus-go/usecases/eg/lpc"
 	eglpp "github.com/enbility/eebus-go/usecases/eg/lpp"
+	"github.com/enbility/eebus-go/usecases/ma/mgcp"
 	shipapi "github.com/enbility/ship-go/api"
 	"github.com/enbility/ship-go/cert"
 	spineapi "github.com/enbility/spine-go/api"
@@ -31,10 +34,13 @@ var remoteSki string
 type hems struct {
 	myService *service.Service
 
-	uccslpc ucapi.CsLPCInterface
-	uccslpp ucapi.CsLPPInterface
-	uceglpc ucapi.EgLPCInterface
-	uceglpp ucapi.EgLPPInterface
+	uccslpc   ucapi.CsLPCInterface
+	uccslpp   ucapi.CsLPPInterface
+	uceglpc   ucapi.EgLPCInterface
+	uceglpp   ucapi.EgLPPInterface
+	ucmamgcp  ucapi.MaMGCPInterface
+	uccemvabd ucapi.CemVABDInterface
+	uccemvapd ucapi.CemVAPDInterface
 }
 
 func (h *hems) run() {
@@ -103,6 +109,12 @@ func (h *hems) run() {
 	h.myService.AddUseCase(h.uceglpc)
 	h.uceglpp = eglpp.NewLPP(localEntity, nil)
 	h.myService.AddUseCase(h.uceglpp)
+	h.ucmamgcp = mgcp.NewMGCP(localEntity, h.OnMGCPEvent)
+	h.myService.AddUseCase(h.ucmamgcp)
+	h.uccemvabd = vabd.NewVABD(localEntity, h.OnVABDEvent)
+	h.myService.AddUseCase(h.uccemvabd)
+	h.uccemvapd = vapd.NewVAPD(localEntity, h.OnVAPDEvent)
+	h.myService.AddUseCase(h.uccemvapd)
 
 	// Initialize local server data
 	_ = h.uccslpc.SetConsumptionNominalMax(32000)
@@ -173,6 +185,83 @@ func (h *hems) OnLPPEvent(ski string, device spineapi.DeviceRemoteInterface, ent
 	}
 }
 
+// Cem VABD Event Handler
+
+func (h *hems) OnVABDEvent(ski string, device spineapi.DeviceRemoteInterface, entity spineapi.EntityRemoteInterface, event api.EventType) {
+	switch event {
+	case vabd.DataUpdateEnergyCharged:
+		if energy, err := h.uccemvabd.EnergyCharged(entity); err == nil {
+			fmt.Println("New VABD Energy Charged set to", energy, "Wh")
+		}
+	case vabd.DataUpdateEnergyDischarged:
+		if energy, err := h.uccemvabd.EnergyDischarged(entity); err == nil {
+			fmt.Println("New VABD Energy Discharged set to", energy, "Wh")
+		}
+	case vabd.DataUpdatePower:
+		if power, err := h.uccemvabd.Power(entity); err == nil {
+			fmt.Println("New VABD Power set to", power, "W")
+		}
+	case vabd.DataUpdateStateOfCharge:
+		if soc, err := h.uccemvabd.StateOfCharge(entity); err == nil {
+			fmt.Println("New VABD State of Charge set to", soc, "%")
+		}
+	}
+}
+
+// Cem VAPD Event Handler
+
+func (h *hems) OnVAPDEvent(ski string, device spineapi.DeviceRemoteInterface, entity spineapi.EntityRemoteInterface, event api.EventType) {
+	switch event {
+	case vapd.DataUpdatePVYieldTotal:
+		if yield, err := h.uccemvapd.PVYieldTotal(entity); err == nil {
+			fmt.Println("New VAPD PV Yield Total set to", yield, "Wh")
+		}
+	case vapd.DataUpdatePowerNominalPeak:
+		if peak, err := h.uccemvapd.PowerNominalPeak(entity); err == nil {
+			fmt.Println("New VAPD Power Nominal Peak set to", peak, "W")
+		}
+	case vapd.DataUpdatePower:
+		if power, err := h.uccemvapd.Power(entity); err == nil {
+			fmt.Println("New VAPD Power set to", power, "W")
+		}
+	}
+}
+
+// Monitoring Appliance MGCP Event Handler
+
+func (h *hems) OnMGCPEvent(ski string, device spineapi.DeviceRemoteInterface, entity spineapi.EntityRemoteInterface, event api.EventType) {
+	switch event {
+	case mgcp.DataUpdatePowerLimitationFactor:
+		if factor, err := h.ucmamgcp.PowerLimitationFactor(entity); err == nil {
+			fmt.Println("New MGCP Power Limitation Factor set to", factor)
+		}
+	case mgcp.DataUpdatePower:
+		if power, err := h.ucmamgcp.Power(entity); err == nil {
+			fmt.Println("New MGCP Power set to", power, "W")
+		}
+	case mgcp.DataUpdateEnergyFeedIn:
+		if energy, err := h.ucmamgcp.EnergyFeedIn(entity); err == nil {
+			fmt.Println("New MGCP Energy Feed-In set to", energy, "Wh")
+		}
+	case mgcp.DataUpdateEnergyConsumed:
+		if energy, err := h.ucmamgcp.EnergyConsumed(entity); err == nil {
+			fmt.Println("New MGCP Energy Consumed set to", energy, "Wh")
+		}
+	case mgcp.DataUpdateCurrentPerPhase:
+		if current, err := h.ucmamgcp.CurrentPerPhase(entity); err == nil {
+			fmt.Println("New MGCP Current per Phase set to", current, "A")
+		}
+	case mgcp.DataUpdateVoltagePerPhase:
+		if voltage, err := h.ucmamgcp.VoltagePerPhase(entity); err == nil {
+			fmt.Println("New MGCP Voltage per Phase set to", voltage, "V")
+		}
+	case mgcp.DataUpdateFrequency:
+		if frequency, err := h.ucmamgcp.Frequency(entity); err == nil {
+			fmt.Println("New MGCP Frequency set to", frequency, "Hz")
+		}
+	}
+}
+
 // EEBUSServiceHandler
 
 func (h *hems) RemoteSKIConnected(service api.ServiceInterface, ski string) {}
@@ -208,10 +297,10 @@ func (h *hems) HandleEVSEDeviceState(ski string, failure bool, errorCode string)
 // main app
 func usage() {
 	fmt.Println("First Run:")
-	fmt.Println("  go run /cmd/hems/main.go <serverport>")
+	fmt.Println("  go run /examples/hems/main.go <serverport>")
 	fmt.Println()
 	fmt.Println("General Usage:")
-	fmt.Println("  go run /cmd/hems/main.go <serverport> <remoteski> <crtfile> <keyfile>")
+	fmt.Println("  go run /examples/hems/main.go <serverport> <remoteski> <crtfile> <keyfile>")
 }
 
 func main() {

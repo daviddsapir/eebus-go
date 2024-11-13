@@ -20,7 +20,7 @@ func NewVABD(localEntity spineapi.EntityLocalInterface, eventCB api.EntityEventC
 		model.UseCaseActorTypeBatterySystem,
 	}
 	validEntityTypes := []model.EntityTypeType{
-		model.EntityTypeTypeElectricityStorageSystem,
+		model.EntityTypeTypeBatterySystem,
 	}
 	useCaseScenarios := []api.UseCaseScenario{
 		{
