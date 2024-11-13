@@ -15,6 +15,12 @@ type MDT struct {
 
 var _ ucapi.MaMDTInterface = (*MDT)(nil)
 
+// Add support for the Monitoring of DHW Temperature (MDT) use case
+// as a MA actor
+//
+// Parameters:
+//   - localEntity: The local entity which should support the use case
+//   - eventCB: The callback to be called when an event is triggered (optional, can be nil)
 func NewMDT(localEntity spineapi.EntityLocalInterface, eventCB api.EntityEventCallback) *MDT {
 	validActorTypes := []model.UseCaseActorType{model.UseCaseActorTypeMonitoredUnit}
 	validEntityTypes := []model.EntityTypeType{
