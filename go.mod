@@ -39,4 +39,4 @@ retract (
 	v0.2.1 // Published accidentally.
 )
 
-replace github.com/enbility/spine-go => ../spine-go
+replace github.com/enbility/spine-go => github.com/heavyweight87/spine-go v0.0.0-20241106134910-4f986b14324a
