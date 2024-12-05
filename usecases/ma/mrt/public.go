@@ -1,43 +1,38 @@
-package mrhsf
+package mrt
 
 import (
 	"github.com/enbility/eebus-go/api"
 	"github.com/enbility/eebus-go/features/client"
-	ucsapi "github.com/enbility/eebus-go/usecases/api"
-	"github.com/enbility/ship-go/logging"
 	"github.com/enbility/ship-go/util"
 	spineapi "github.com/enbility/spine-go/api"
+	"github.com/enbility/spine-go/model"
 )
 
-// OperationMode returns the current operation mode
+// Scenario 1
+
+// return the momentary room temperature
 //
-// Parameters:
-//   - entity: The entity to get the operation mode for.
-//
-// Possible errors:
-//   - ErrDataNotAvailable: If the operation mode is not (yet) available.
-//   - Other: Any other errors encountered during the process.
-func (e *MRHSF) OperationMode(entity spineapi.EntityRemoteInterface) (*ucsapi.HvacOperationModeType, error) {
-	hvac, err := client.NewHvac(e.LocalEntity, entity)
+// possible errors:
+//   - ErrDataNotAvailable if room temperature is not available
+//   - and others
+func (e *MRT) RoomTemperature(entity spineapi.EntityRemoteInterface) (float64, error) {
+	if !e.IsCompatibleEntityType(entity) {
+		return 0, api.ErrNoCompatibleEntity
+	}
+
+	measurement, err := client.NewMeasurement(e.LocalEntity, entity)
 	if err != nil {
-		return nil, err
+		return 0, api.ErrMetadataNotAvailable
 	}
 
-	systemFunction, err := hvac.GetHvacSystemFunctionForId(*e.heatingSystemFunctionID)
-	if err != nil {
-		logging.Log().Debug(err)
-		return nil, err
+	filter := model.MeasurementDescriptionDataType{
+		ScopeType: util.Ptr(model.ScopeTypeTypeRoomAirTemperature),
 	}
 
-	modeId := systemFunction.CurrentOperationModeId
-	if modeId == nil {
-		return nil, api.ErrDataNotAvailable
+	measurements, err := measurement.GetDataForFilter(filter)
+	if err == nil && len(measurements) == 1 {
+		return measurements[0].Value.GetValue(), nil
 	}
 
-	mode, found := e.operationModeForOperationModeId[*modeId]
-	if !found {
-		return nil, api.ErrDataNotAvailable
-	}
-
-	return util.Ptr(ucsapi.HvacOperationModeType(mode)), nil
+	return 0.0, api.ErrDataNotAvailable
 }

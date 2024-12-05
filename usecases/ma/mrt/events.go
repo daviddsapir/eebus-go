@@ -1,4 +1,4 @@
-package mrhsf
+package mrt
 
 import (
 	"github.com/enbility/eebus-go/features/client"
@@ -10,13 +10,13 @@ import (
 )
 
 // HandleEvent handles events for the CRCSF use case
-func (e *MRHSF) HandleEvent(payload spineapi.EventPayload) {
+func (e *MRT) HandleEvent(payload spineapi.EventPayload) {
 	if !e.IsCompatibleEntityType(payload.Entity) {
 		return
 	}
 
 	if internal.IsEntityConnected(payload) {
-		e.connected(payload.Entity)
+		e.deviceConnected(payload.Entity)
 		return
 	}
 
@@ -26,143 +26,53 @@ func (e *MRHSF) HandleEvent(payload spineapi.EventPayload) {
 	}
 
 	switch payload.Data.(type) {
-	case *model.HvacSystemFunctionDescriptionListDataType:
-		e.updateSystemFunctionDescriptions(payload)
-	case *model.HvacSystemFunctionOperationModeRelationListDataType:
-		e.updateSystemFunctionOperationModeRelations(payload)
-	case *model.HvacOperationModeDescriptionListDataType,
-		*model.HvacSystemFunctionListDataType:
-		e.updateOperationModes(payload)
+	case *model.MeasurementDescriptionListDataType:
+		e.deviceMeasurementDescriptionDataUpdate(payload.Entity)
+
+	case *model.MeasurementListDataType:
+		e.deviceMeasurementDataUpdate(payload)
 	}
 }
 
-func (e *MRHSF) updateOperationModes(payload spineapi.EventPayload) {
-	if e.heatingSystemFunctionID == nil {
-		return
-	}
-
-	hvac, err := client.NewHvac(e.LocalEntity, payload.Entity)
-	if err != nil {
-		logging.Log().Debug(err)
-		return
-	}
-
-	relations, _ := hvac.GetHvacSystemFunctionOperationModeRelations()
-	descriptions, _ := hvac.GetHvacOperationModeDescriptions()
-	functions, _ := hvac.GetHvacSystemFunctions()
-
-	if len(descriptions) == 0 || len(functions) == 0 {
-		return
-	}
-
-	clear(e.operationModeForOperationModeId)
-
-	opModeIds := make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType)
-	for _, description := range descriptions {
-		opModeIds[*description.OperationModeId] = *description.OperationModeType
-	}
-
-	for _, relation := range relations {
-		for _, operationModeId := range relation.OperationModeId {
-			if operationMode, found := opModeIds[operationModeId]; found {
-				e.operationModeForOperationModeId[operationModeId] = operationMode
+// process required steps when a device is connected
+func (e *MRT) deviceConnected(entity spineapi.EntityRemoteInterface) {
+	if measurement, err := client.NewMeasurement(e.LocalEntity, entity); err == nil {
+		if !measurement.HasSubscription() {
+			if _, err := measurement.Subscribe(); err != nil {
+				logging.Log().Error(err)
 			}
 		}
-	}
 
-	e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateOperationMode)
-}
-
-func (e *MRHSF) updateSystemFunctionOperationModeRelations(payload spineapi.EventPayload) {
-	hvac, err := client.NewHvac(e.LocalEntity, payload.Entity)
-	if err != nil {
-		logging.Log().Errorf("Failed to create HVAC client: %v", err)
-		return
-	}
-
-	data := payload.Data.(*model.HvacSystemFunctionOperationModeRelationListDataType)
-	if data == nil || len(data.HvacSystemFunctionOperationModeRelationData) == 0 {
-		return
-	}
-
-	relations := data.HvacSystemFunctionOperationModeRelationData
-	if len(relations) != 1 ||
-		relations[0].SystemFunctionId == nil ||
-		*relations[0].SystemFunctionId != *e.heatingSystemFunctionID {
-		return
-	}
-
-	modeIds := relations[0].OperationModeId
-	for _, id := range modeIds {
-		// Request the operation mode description by the operation mode ID for the heating function
-		selector := &model.HvacOperationModeDescriptionListDataSelectorsType{
-			OperationModeId: &id,
+		// Get measurement parameters
+		if _, err := measurement.RequestDescriptions(nil, nil); err != nil {
+			logging.Log().Error(err)
 		}
-		if _, err := hvac.RequestHvacOperationModeDescriptions(selector, nil); err != nil {
-			logging.Log().Errorf("Failed to request HVAC operation mode descriptions: %v", err)
-		}
-	}
 
-	// Request the system functions for the "heating" system function
-	selector := &model.HvacSystemFunctionListDataSelectorsType{
-		SystemFunctionId: e.heatingSystemFunctionID,
-	}
-	if _, err := hvac.RequestHvacSystemFunctions(selector, nil); err != nil {
-		logging.Log().Errorf("Failed to request HVAC system functions: %v", err)
+		if _, err := measurement.RequestConstraints(nil, nil); err != nil {
+			logging.Log().Error(err)
+		}
 	}
 }
 
-func (e *MRHSF) updateSystemFunctionDescriptions(payload spineapi.EventPayload) {
-	data := payload.Data.(*model.HvacSystemFunctionDescriptionListDataType)
-	if data == nil {
-		logging.Log().Errorf("Received nil HVAC system function description list data change event")
-		return
-	}
-
-	hvac, err := client.NewHvac(e.LocalEntity, payload.Entity)
-	if err != nil {
-		logging.Log().Errorf("Failed to create HVAC client: %v", err)
-		return
-	}
-
-	// Get the system function ID for the heating function
-	filter := model.HvacSystemFunctionDescriptionDataType{
-		SystemFunctionType: util.Ptr(model.HvacSystemFunctionTypeTypeHeating),
-	}
-	systemFunctions, err := hvac.GetHvacSystemFunctionDescriptionsForFilter(filter)
-	if err != nil || len(systemFunctions) != 1 {
-		logging.Log().Errorf("Failed to get heating function: %v", err)
-		return
-	}
-
-	// Get the system function ID for the heating function
-	e.heatingSystemFunctionID = systemFunctions[0].SystemFunctionId
-
-	// Get the operation mode relations for the heating function
-	selector := &model.HvacSystemFunctionOperationModeRelationListDataSelectorsType{
-		SystemFunctionId: e.heatingSystemFunctionID,
-	}
-	if _, err := hvac.RequestHvacSystemFunctionOperationModeRelations(selector, nil); err != nil {
-		logging.Log().Errorf("Failed to request HVAC system function operation mode relations: %v", err)
+// The measurement description data of a device was updated
+func (e *MRT) deviceMeasurementDescriptionDataUpdate(entity spineapi.EntityRemoteInterface) {
+	if measurement, err := client.NewMeasurement(e.LocalEntity, entity); err == nil {
+		// measurement descriptions received, now get the data
+		if _, err := measurement.RequestData(nil, nil); err != nil {
+			logging.Log().Error("Error getting measurement list values:", err)
+		}
 	}
 }
 
-func (e *MRHSF) connected(entity spineapi.EntityRemoteInterface) {
-	hvac, err := client.NewHvac(e.LocalEntity, entity)
-	if err != nil {
-		logging.Log().Errorf("Failed to create HVAC client: %v", err)
-		return
-	}
-
-	if !hvac.HasSubscription() {
-		if _, err := hvac.Subscribe(); err != nil {
-			logging.Log().Errorf("Failed to subscribe to HVAC: %v", err)
-			return
+// The measurement data of a device was updated
+func (e *MRT) deviceMeasurementDataUpdate(payload spineapi.EventPayload) {
+	if measurement, err := client.NewMeasurement(e.LocalEntity, payload.Entity); err == nil {
+		// Scenario 1
+		filter := model.MeasurementDescriptionDataType{
+			ScopeType: util.Ptr(model.ScopeTypeTypeRoomAirTemperature),
 		}
-	}
-
-	if _, err := hvac.RequestHvacSystemFunctionDescriptions(nil, nil); err != nil {
-		logging.Log().Errorf("Failed to request HVAC system function descriptions: %v", err)
-		return
+		if measurement.CheckEventPayloadDataForFilter(payload.Data, filter) && e.EventCB != nil {
+			e.EventCB(payload.Ski, payload.Device, payload.Entity, DataUpdateRoomTemperature)
+		}
 	}
 }

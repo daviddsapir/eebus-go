@@ -1,4 +1,4 @@
-package mrhsf
+package mrt
 
 import (
 	"github.com/enbility/eebus-go/api"
@@ -9,21 +9,18 @@ import (
 	"github.com/enbility/spine-go/spine"
 )
 
-// MDSF - Monitoring of DHW System Function Use Case
-type MRHSF struct {
+// MRT - Monitoring of Room Temperature Use Case
+type MRT struct {
 	*usecase.UseCaseBase
-
-	heatingSystemFunctionID         *model.HvacSystemFunctionIdType
-	operationModeForOperationModeId map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType
 }
 
-var _ ucapi.MaMRHSFInterface = (*MRHSF)(nil)
+var _ ucapi.MaMRTInterface = (*MRT)(nil)
 
 // Create a new Monitoring of DHW System Function Use Case
 func NewMRHSF(
 	localEntity spineapi.EntityLocalInterface,
 	eventCB api.EntityEventCallback,
-) *MRHSF {
+) *MRT {
 	validActorTypes := []model.UseCaseActorType{
 		model.UseCaseActorTypeHVACRoom,
 	}
@@ -53,9 +50,8 @@ func NewMRHSF(
 		validEntityTypes,
 	)
 
-	uc := &MRHSF{
-		UseCaseBase:                     usecase,
-		operationModeForOperationModeId: make(map[model.HvacOperationModeIdType]model.HvacOperationModeTypeType),
+	uc := &MRT{
+		UseCaseBase: usecase,
 	}
 
 	_ = spine.Events.Subscribe(uc)
@@ -63,7 +59,7 @@ func NewMRHSF(
 	return uc
 }
 
-func (e *MRHSF) AddFeatures() {
+func (e *MRT) AddFeatures() {
 	// client features
 	var clientFeatures = []model.FeatureTypeType{}
 	for _, feature := range clientFeatures {

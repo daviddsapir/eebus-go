@@ -1,4 +1,4 @@
-package mrhsf
+package mrt
 
 import "github.com/enbility/eebus-go/api"
 
@@ -6,12 +6,12 @@ const (
 	// Update of the list of remote entities supporting the Use Case
 	//
 	// Use `RemoteEntities` to get the current data
-	UseCaseSupportUpdate api.EventType = "ma-mrhsf-UseCaseSupportUpdate"
+	UseCaseSupportUpdate api.EventType = "ma-mrt-UseCaseSupportUpdate"
 
-	// Current operation mode
+	// Current room temperature
 	//
-	// Use `OperationMode` to get the current data
+	// Use `RoomTemperature` to get the current data
 	//
-	// Use Case MRHSF, Scenario 1
-	DataUpdateOperationMode api.EventType = "ma-mrhsf-DataUpdateOperationMode"
+	// Use Case MRT, Scenario 1
+	DataUpdateRoomTemperature api.EventType = "ma-mrt-DataUpdateRoomTemperature"
 )
